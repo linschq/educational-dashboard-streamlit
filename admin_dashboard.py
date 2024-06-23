@@ -26,9 +26,11 @@ def data_ready():
 
 df_final_uuid_rating, df_userdata_named, df_final_upid_rating = data_ready()
 
+
 # Merge dataframes
 merged_df = pd.merge(df_final_uuid_rating, df_userdata_named, on='uuid', how='inner')
 
+# Menampilkan judul
 st.title('Admin Dashboard')
 
 # Filter out students with a rating of zero
@@ -67,7 +69,7 @@ fig.add_trace(go.Scatter(
 
 # Create axis objects
 fig.update_layout(
-    title={'text': 'Distribution of Students Home Cities and Average Ratings', 'x': 0.5, 'xanchor': 'center'},
+    title='Distribution of Students Home Cities and Average Ratings',
     xaxis=dict(title='City'),
     yaxis=dict(
         title='Student Count',
@@ -83,69 +85,17 @@ fig.update_layout(
     ),
     legend=dict(x=0.1, y=1.1, orientation='h'),
     plot_bgcolor='rgba(255, 255, 255, 0.9)',
-    paper_bgcolor='rgba(240, 240, 240, 0.9)',
-    height=600  # Adjust height to align with annotation box
+    paper_bgcolor='rgba(240, 240, 240, 0.9)'
 )
 
-# Display the chart and annotation in Streamlit with 3:1 ratio
-col1, col2 = st.columns([3, 1])
+# Display the bar chart in Streamlit
+st.header('Student Demographic Data')
+st.plotly_chart(fig, use_container_width=True)
 
-with col1:
-    st.header('Student Demographic Data')
-    st.plotly_chart(fig, use_container_width=True)
-
-with col2:
-    st.header('Insights')
-    st.markdown(
-        """
-        <div style="background-color: rgba(240, 240, 240, 0.9); padding: 10px; height: 600px;">
-            <p style="color: black;">
-                1. The majority of students come from 'tp' and 'ntpc', showing the highest counts.<br>
-                2. Cities 'tc' and 'ty' stand out with high average ratings despite moderate student counts.<br>
-                3. Lower student count cities like 'ttct' and 'kl' exhibit high average ratings, suggesting better performance quality.<br>
-                4. There is a notable variability in average ratings across cities, indicating regional differences in student performance.<br>
-                5. No clear correlation exists between student count and average rating, implying that quality doesn't always align with quantity.
-            </p>
-        </div>
-        """, 
-        unsafe_allow_html=True
-    )
-
+# Distribusi Akurasi Student Berdasarkan Problem
 st.header('Accuracy Analysis Based on Lesson Category')
-
-# Tab selection
+# Menambahkan tab di Streamlit
 tab1, tab2 = st.tabs(["Student Accuracy", "Problem Accuracy"])
-
-def add_vlines(fig, data, mean_val, median_val, q1_val, q3_val):
-    fig.add_vline(x=mean_val, line=dict(color='red', width=2, dash='dash'), annotation_text=f"Mean: {mean_val:.2f}", annotation_position="top right")
-    fig.add_vline(x=median_val, line=dict(color='green', width=2, dash='dash'), annotation_text=f"Median: {median_val:.2f}", annotation_position="top right")
-    fig.add_vline(x=q1_val, line=dict(color='blue', width=2, dash='dash'), annotation_text=f"Q1: {q1_val:.2f}", annotation_position="top right")
-    fig.add_vline(x=q3_val, line=dict(color='purple', width=2, dash='dash'), annotation_text=f"Q3: {q3_val:.2f}", annotation_position="top right")
-
-def plot_accuracy_distribution(data, category):
-    fig = go.Figure()
-    # Histogram for accuracy
-    fig.add_trace(go.Histogram(x=data['accuracy'], nbinsx=50, name='Accuracy', marker=dict(color='rgba(70, 130, 180, 0.7)', line=dict(color='rgba(70, 130, 180, 1)', width=1.5))))
-    
-    # Statistics
-    mean_accuracy = data['accuracy'].mean()
-    median_accuracy = data['accuracy'].median()
-    q1_accuracy = data['accuracy'].quantile(0.25)
-    q3_accuracy = data['accuracy'].quantile(0.75)
-    
-    add_vlines(fig, data['accuracy'], mean_accuracy, median_accuracy, q1_accuracy, q3_accuracy)
-    
-    # Update layout
-    fig.update_layout(
-        title={'text': f'Distribution of {category} Accuracy', 'x': 0.5, 'xanchor': 'center'},
-        xaxis=dict(title='Accuracy'),
-        yaxis=dict(title='Count'),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        height=400,
-        margin=dict(l=0, r=0, t=30, b=0)
-    )
-    
-    return fig
 
 with tab1:
     st.subheader('Distribution of Student Accuracy')
@@ -159,29 +109,73 @@ with tab1:
     geometry_data_no_zeros = geometry_data[geometry_data['accuracy'] > 0]
     algebra_data_no_zeros = algebra_data[algebra_data['accuracy'] > 0]
 
-    fig_arithmetic = plot_accuracy_distribution(arithmetic_data_no_zeros, 'Arithmetic')
-    fig_geometry = plot_accuracy_distribution(geometry_data_no_zeros, 'Geometry')
-    fig_algebra = plot_accuracy_distribution(algebra_data_no_zeros, 'Algebra')
+    # Arithmetic accuracy distribution
+    fig_arithmetic = go.Figure()
+    fig_arithmetic.add_trace(
+        go.Histogram(
+            x=arithmetic_data_no_zeros['accuracy'],
+            nbinsx=50,
+            marker=dict(color='rgba(70, 130, 180, 0.7)', line=dict(color='rgba(70, 130, 180, 1)', width=1.5))  # Steel blue
+        )
+    )
+    mean_accuracy_arithmetic = arithmetic_data_no_zeros['accuracy'].mean()
+    fig_arithmetic.add_vline(
+        x=mean_accuracy_arithmetic,
+        line=dict(color='red', width=2, dash='dash'),
+        annotation_text=f"Mean: {mean_accuracy_arithmetic:.2f}",
+        annotation_position="top right"
+    )
+    fig_arithmetic.update_layout(title_text='Distribution of student accuracy for category: Arithmetic', showlegend=False)
+
+    # Geometry accuracy distribution
+    fig_geometry = go.Figure()
+    fig_geometry.add_trace(
+        go.Histogram(
+            x=geometry_data_no_zeros['accuracy'],
+            nbinsx=50,
+            marker=dict(color='rgba(100, 149, 237, 0.7)', line=dict(color='rgba(100, 149, 237, 1)', width=1.5))  # Cornflower blue
+        )
+    )
+    mean_accuracy_geometry = geometry_data_no_zeros['accuracy'].mean()
+    fig_geometry.add_vline(
+        x=mean_accuracy_geometry,
+        line=dict(color='red', width=2, dash='dash'),
+        annotation_text=f"Mean: {mean_accuracy_geometry:.2f}",
+        annotation_position="top right"
+    )
+    fig_geometry.update_layout(title_text='Distribution of student accuracy for category: Geometry', showlegend=False)
+
+    # Algebra accuracy distribution
+    fig_algebra = go.Figure()
+    fig_algebra.add_trace(
+        go.Histogram(
+            x=algebra_data_no_zeros['accuracy'],
+            nbinsx=50,
+            marker=dict(color='rgba(0, 0, 139, 0.7)', line=dict(color='rgba(0, 0, 139, 1)', width=1.5))  # Dark blue
+        )
+    )
+    mean_accuracy_algebra = algebra_data_no_zeros['accuracy'].mean()
+    fig_algebra.add_vline(
+        x=mean_accuracy_algebra,
+        line=dict(color='red', width=2, dash='dash'),
+        annotation_text=f"Mean: {mean_accuracy_algebra:.2f}",
+        annotation_position="top right"
+    )
+    fig_algebra.update_layout(title_text='Distribution of student accuracy for category: Algebra', showlegend=False)
 
     # Display histograms in three columns
-    col1, col2, col3 = st.columns(3)
+    akurasi_container = st.container()
+    with akurasi_container:
+        col1, col2, col3 = st.columns(3)
 
-    with col1:
-        st.plotly_chart(fig_arithmetic, use_container_width=True)
-    with col2:
-        st.plotly_chart(fig_geometry, use_container_width=True)
-    with col3:
-        st.plotly_chart(fig_algebra, use_container_width=True)
-    
-    # Add insights
-    st.markdown(
-        """
-        ### Insights
-        1. **Arithmetic**: The majority of students demonstrate strong proficiency in arithmetic, with a high mean accuracy of 0.72, indicating that arithmetic concepts are well-grasped and mastered by most students.
-        2. **Geometry**: The mean accuracy of 0.58 in geometry suggests that students find this subject more challenging, with a wider spread in accuracy. This highlights the need for targeted interventions to improve understanding and performance in geometric concepts.
-        3. **Algebra**: Students show moderate success in algebra, with a mean accuracy of 0.64. While performance is better than in geometry, there is still room for improvement to achieve higher proficiency levels.
-        """
-    )
+        with col1:
+            st.plotly_chart(fig_arithmetic, use_container_width=True)
+
+        with col2:
+            st.plotly_chart(fig_geometry, use_container_width=True)
+
+        with col3:
+            st.plotly_chart(fig_algebra, use_container_width=True)
 
 with tab2:
     st.subheader('Distribution of Problem Accuracy')
@@ -190,38 +184,78 @@ with tab2:
     arithmetic_data = df_final_upid_rating[df_final_upid_rating['categories'] == 'Arithmetic']
     arithmetic_data_no_zeros = arithmetic_data[arithmetic_data['accuracy'] > 0]
 
-    fig_arithmetic = plot_accuracy_distribution(arithmetic_data_no_zeros, 'Arithmetic')
-    
+    fig_arithmetic = go.Figure()
+    fig_arithmetic.add_trace(
+        go.Histogram(
+            x=arithmetic_data_no_zeros['accuracy'],
+            nbinsx=50,
+            marker=dict(color='rgba(70, 130, 180, 0.7)', line=dict(color='rgba(70, 130, 180, 1)', width=1.5))  # Steel blue
+        )
+    )
+    mean_accuracy_arithmetic = arithmetic_data_no_zeros['accuracy'].mean()
+    fig_arithmetic.add_vline(
+        x=mean_accuracy_arithmetic,
+        line=dict(color='red', width=2, dash='dash'),
+        annotation_text=f"Mean: {mean_accuracy_arithmetic:.2f}",
+        annotation_position="top right"
+    )
+    fig_arithmetic.update_layout(title_text='Distribution of Problem Accuracy for: Arithmetic', showlegend=False)
+
     # Geometry accuracy distribution
     geometry_data = df_final_upid_rating[df_final_upid_rating['categories'] == 'Geometry']
     geometry_data_no_zeros = geometry_data[geometry_data['accuracy'] > 0]
 
-    fig_geometry = plot_accuracy_distribution(geometry_data_no_zeros, 'Geometry')
-    
+    fig_geometry = go.Figure()
+    fig_geometry.add_trace(
+        go.Histogram(
+            x=geometry_data_no_zeros['accuracy'],
+            nbinsx=50,
+            marker=dict(color='rgba(100, 149, 237, 0.7)', line=dict(color='rgba(100, 149, 237, 1)', width=1.5))  # Cornflower blue
+        )
+    )
+    mean_accuracy_geometry = geometry_data_no_zeros['accuracy'].mean()
+    fig_geometry.add_vline(
+        x=mean_accuracy_geometry,
+        line=dict(color='red', width=2, dash='dash'),
+        annotation_text=f"Mean: {mean_accuracy_geometry:.2f}",
+        annotation_position="top right"
+    )
+    fig_geometry.update_layout(title_text='Distribution of Problem Accuracy for: Geometry', showlegend=False)
+
     # Algebra accuracy distribution
     algebra_data = df_final_upid_rating[df_final_upid_rating['categories'] == 'Algebra']
     algebra_data_no_zeros = algebra_data[algebra_data['accuracy'] > 0]
 
-    fig_algebra = plot_accuracy_distribution(algebra_data_no_zeros, 'Algebra')
+    fig_algebra = go.Figure()
+    fig_algebra.add_trace(
+        go.Histogram(
+            x=algebra_data_no_zeros['accuracy'],
+            nbinsx=50,
+            marker=dict(color='rgba(0, 0, 139, 0.7)', line=dict(color='rgba(0, 0, 139, 1)', width=1.5))  # Dark blue
+        )
+    )
+    mean_accuracy_algebra = algebra_data_no_zeros['accuracy'].mean()
+    fig_algebra.add_vline(
+        x=mean_accuracy_algebra,
+        line=dict(color='red', width=2, dash='dash'),
+        annotation_text=f"Mean: {mean_accuracy_algebra:.2f}",
+        annotation_position="top right"
+    )
+    fig_algebra.update_layout(title_text='Distribution of Problem Accuracy for: Algebra', showlegend=False)
 
     # Display histograms in three columns
-    col1, col2, col3 = st.columns(3)
+    akurasi_container = st.container()
+    with akurasi_container:
+        col1, col2, col3 = st.columns(3)
 
-    with col1:
-        st.plotly_chart(fig_arithmetic, use_container_width=True)
-    with col2:
-        st.plotly_chart(fig_geometry, use_container_width=True)
-    with col3:
-        st.plotly_chart(fig_algebra, use_container_width=True)
+        with col1:
+            st.plotly_chart(fig_arithmetic, use_container_width=True)
 
-    st.markdown(
-        """
-        ### Insights
-        1. **Arithmetic**: Problems in this category have a mean accuracy of 0.68, indicating that students generally perform well on arithmetic problems. This reflects a solid understanding and application of arithmetic principles.
-        2. **Geometry**: The mean accuracy of 0.52 for geometry problems points to significant variability in student performance, suggesting that some students struggle more with geometry. This underscores the importance of providing additional resources and support for geometry-related topics.
-        3. **Algebra**: With a mean accuracy of 0.60, algebra problems see moderate success among students. This suggests a decent grasp of algebraic concepts, but highlights the need for further practice and reinforcement to achieve higher accuracy and mastery.
-        """
-    )
+        with col2:
+            st.plotly_chart(fig_geometry, use_container_width=True)
+
+        with col3:
+            st.plotly_chart(fig_algebra, use_container_width=True)
 
 # Calculate average time spent per session
 # df_log['timestamp'] = pd.to_datetime(df_log['timestamp_TW'])
@@ -232,16 +266,12 @@ with tab2:
 def data_ready3():
     avg_time_per_day = pd.read_parquet('time_per_day.parquet.gzip')
     return avg_time_per_day
-
 avg_time_per_day = data_ready3()
 
-# Merge dataframes
-merged_df = pd.merge(df_final_uuid_rating, df_userdata_named, on='uuid', how='inner')
-
 # User Engagement Metrics
-st.header('User Engagement Metrics: Daily New Users and Average Time Spent on Platform per Day')
+st.header('User Engagement Metrics: Daily New Users and Average Event Duration')
 
-# Calculate login counts per day
+# Calculate login counts per dayƒ
 merged_df['login_date'] = pd.to_datetime(merged_df['first_login_date_TW']).dt.date
 login_counts_per_day = merged_df.groupby('login_date').size().reset_index(name='user_count')
 
@@ -261,7 +291,7 @@ start_date, end_date = st.slider(
 filtered_login_counts = login_counts_per_day[(login_counts_per_day['login_date'] >= start_date) & (login_counts_per_day['login_date'] <= end_date)]
 filtered_avg_time = avg_time_per_day[(avg_time_per_day['date'] >= start_date) & (avg_time_per_day['date'] <= end_date)]
 
-# Plot for daily new users
+# Plot for login counts
 fig_login = px.line(
     filtered_login_counts, 
     x='login_date', 
@@ -272,35 +302,33 @@ fig_login = px.line(
 )
 
 fig_login.update_traces(
-    line=dict(color='rgba(0, 0, 139, 0.8)'),  # Dark blue color
-    marker=dict(color='rgba(0, 0, 139, 0.8)', size=5)  # Dark blue color
+    line=dict(color='rgba(0, 0, 139, 0.8)'),  # Warna biru dongker
+    marker=dict(color='rgba(0, 0, 139, 0.8)', size=5)  # Warna biru dongker
 )
 
 fig_login.update_layout(
-    title={'text': 'Number of Users Registered Per Day', 'x': 0.5, 'xanchor': 'center'},
     xaxis_title='Date',
     yaxis_title='Number of Users',
-    plot_bgcolor='rgba(255, 255, 255, 0.9)',  # Light pastel background color
-    paper_bgcolor='rgba(240, 240, 240, 0.9)'  # Light pastel paper background color
+    plot_bgcolor='rgba(255, 255, 255, 0.9)',  # Warna latar belakang putih pastel
+    paper_bgcolor='rgba(240, 240, 240, 0.9)'  # Warna latar belakang kertas abu-abu muda pastel
 )
 
-# Plot for average time spent on platform per day
+# Plot for average time per session
 fig_avg_time = px.line(
     filtered_avg_time,
     x='date',
     y='total_sec_taken',
-    title='Average Time Spent on Platform per Day',
+    title='Average Time Spent per Event Per Day',
     line_shape='spline', 
     markers=True  
 )
 
 fig_avg_time.update_traces(
-    line=dict(color='rgba(0, 0, 139, 0.8)'),  # Dark blue color
-    marker=dict(color='rgba(0, 0, 139, 0.8)', size=5)  # Dark blue color
+    line=dict(color='rgba(0, 0, 139, 0.8)'),  # Warna biru dongker
+    marker=dict(color='rgba(0, 0, 139, 0.8)', size=5)  # Warna biru dongker
 )
 
 fig_avg_time.update_layout(
-    title={'text': 'Average Time Spent on Platform per Day', 'x': 0.5, 'xanchor': 'center'},
     xaxis_title='Date',
     yaxis_title='Average Time (seconds)',
     plot_bgcolor='rgba(255, 255, 255, 0.9)',  
@@ -316,21 +344,11 @@ with col1:
 with col2:
     st.plotly_chart(fig_avg_time, use_container_width=True)
 
-st.markdown(
-    """
-    ### Insights
-    - **User Registration Trends**: There is a significant spike around early August 2018, likely due to a marketing campaign or product launch.
-    - **Gradual Decline**: After the spike, registrations decrease and stabilize with periodic peaks, indicating effective periodic marketing efforts.
-    - **Increasing Engagement**: The average time spent on the platform per day increases from August to November 2018, indicating rising user engagement.
-    - **Stabilization**: After November, the average time spent on the platform stabilizes between 40 to 50 seconds, reflecting consistent engagement from users.
-    """
-)
 
 # Filter out students with more than zero activities
 merged_df = merged_df[merged_df['num_activities'] > 100]
 
-# Top 5 Students section
-st.header('Top 5 Outstanding Students')
+st.header('10 Top Outstanding Students')
 
 cities = ['All Cities'] + merged_df['user_city'].unique().tolist()
 selected_city = st.selectbox('Choose Cities:', cities)
@@ -347,62 +365,31 @@ df_group = filtered_df.groupby(['alias', 'user_city'], observed=True).agg(
 ).reset_index()
 
 # Rank top 10 students by average rating and attempt count
-df_rank_rating = df_group.nlargest(5, 'average_rating').sort_values(by='average_rating', ascending=False)
-df_rank_attempt = df_group.nlargest(5, 'attempt_count').sort_values(by='attempt_count', ascending=False)
+df_rank_rating = df_group.nlargest(10, 'average_rating').sort_values(by='average_rating', ascending=False)
+df_rank_attempt = df_group.nlargest(10, 'attempt_count').sort_values(by='attempt_count', ascending=False)
 
-# Plot top 5 students by average rating
+# Define a custom color scale for blue gradient
+blue_gradient = ['#B0E0E6', '#87CEEB', '#4682B4', '#4169E1', '#0000CD']
+
+# Plot top 10 students by average rating
 rank1, rank2 = st.columns(2)
 with rank1:
     fig = px.bar(df_rank_rating, x='alias', y='average_rating', color='user_city',
-                 title=f'<span style="text-align:center;">Top 5 Highest Rated Students in {selected_city}</span>',
+                 title=f'Top 10 Highest Rated Students in {selected_city}',
                  labels={'alias': 'Student Names', 'average_rating': 'Average Rating'},
                  height=600,
                  )
-    fig.update_layout(title_x=0.5)  # Center the title
     st.plotly_chart(fig, use_container_width=True)
 
-# Plot top 5 students by attempt count
+# Plot top 10 students by attempt count
 with rank2:
     fig = px.bar(df_rank_attempt, x='alias', y='attempt_count', color='user_city',
-                 title=f'<span style="text-align:center;">Top 5 Most Active Students in {selected_city}</span>',
+                 title=f'Top 10 Most Active Students in {selected_city}',
                  labels={'alias': 'Student Names', 'attempt_count': 'Attempt Count'},
                  height=600,)
-    fig.update_layout(title_x=0.5)  # Center the title
+                #  color_discrete_sequence=blue_gradient)
     st.plotly_chart(fig, use_container_width=True)
 
-# Top Rated Students
-st.markdown(
-    f"""
-    <div style="text-align: left; font-size: 20px;">
-        <p><strong>Top Rated Students</strong></p>
-        <ul>
-            <li>{df_rank_rating.iloc[0]['alias']} from {df_rank_rating.iloc[0]['user_city']} is leading with an impressive average rating of {df_rank_rating.iloc[0]['average_rating']:.2f}. Their dedication and consistent performance set them apart.</li>
-            <li>{df_rank_rating.iloc[1]['alias']} from {df_rank_rating.iloc[1]['user_city']} follows closely with a rating of {df_rank_rating.iloc[1]['average_rating']:.2f}. Their efforts in achieving such high scores are commendable.</li>
-            <li>{df_rank_rating.iloc[2]['alias']} from {df_rank_rating.iloc[2]['user_city']} stands out with a rating of {df_rank_rating.iloc[2]['average_rating']:.2f}, showcasing their academic excellence.</li>
-            <li>{df_rank_rating.iloc[3]['alias']} from {df_rank_rating.iloc[3]['user_city']} has earned a rating of {df_rank_rating.iloc[3]['average_rating']:.2f}, highlighting their hard work.</li>
-            <li>{df_rank_rating.iloc[4]['alias']} from {df_rank_rating.iloc[4]['user_city']} is remarkable with a rating of {df_rank_rating.iloc[4]['average_rating']:.2f}, reflecting their excellence.</li>
-        </ul>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-# Most Active Students
-st.markdown(
-    f"""
-    <div style="text-align: left; font-size: 20px;">
-        <p><strong>Most Active Students</strong></p>
-        <ul>
-            <li>{df_rank_attempt.iloc[0]['alias']} from {df_rank_attempt.iloc[0]['user_city']} has the highest attempt count of {df_rank_attempt.iloc[0]['attempt_count']} activities, demonstrating their dedication and persistence.</li>
-            <li>{df_rank_attempt.iloc[1]['alias']} from {df_rank_attempt.iloc[1]['user_city']} is highly active with {df_rank_attempt.iloc[1]['attempt_count']} attempts, indicating a strong commitment to their studies.</li>
-            <li>{df_rank_attempt.iloc[2]['alias']} from {df_rank_attempt.iloc[2]['user_city']} shows great engagement with {df_rank_attempt.iloc[2]['attempt_count']} attempts, reflecting their determination to improve.</li>
-            <li>{df_rank_attempt.iloc[3]['alias']} from {df_rank_attempt.iloc[3]['user_city']} has a notable attempt count of {df_rank_attempt.iloc[3]['attempt_count']}, showcasing their hard work.</li>
-            <li>{df_rank_attempt.iloc[4]['alias']} from {df_rank_attempt.iloc[4]['user_city']} is actively participating with {df_rank_attempt.iloc[4]['attempt_count']} attempts, demonstrating their commitment.</li>
-        </ul>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
 
 st.header('User Retention')
 
@@ -424,15 +411,18 @@ df_cohort = data_ready4()
 
 cohort_pivot = df_cohort.pivot_table(index='First_Mo', columns='period_number', values='n_customers')
 
+# Calculate retention rates
 cohort_size = cohort_pivot.iloc[:, 0]
 retention_matrix = cohort_pivot.divide(cohort_size, axis=0).round(4) * 100
 
+# Define a custom color scale for softer blue gradient
 blue_white_colorscale = [
-    [0.0, 'rgba(173, 216, 230, 0.1)'],
-    [0.5, 'rgba(173, 216, 230, 0.5)'],  
-    [1.0, 'rgba(0, 0, 255, 1)']         
+    [0.0, 'rgba(173, 216, 230, 0.1)'],  # Very light blue
+    [0.5, 'rgba(173, 216, 230, 0.5)'],  # Light blue
+    [1.0, 'rgba(0, 0, 255, 1)']         # Blue
 ]
 
+# Visualize the cohort
 fig = px.imshow(
     retention_matrix,
     labels=dict(x="Period Number", y="Cohort Month", color="Retention Rate"),
@@ -449,16 +439,6 @@ fig.update_layout(
     font=dict(color="black"),  # Set text color to black
     plot_bgcolor='rgba(255, 255, 255, 0.9)',
     paper_bgcolor='rgba(240, 240, 240, 0.9)',
-    height=1000,  # Adjust the height of the heatmap
-    width=1200   # Adjust the width of the heatmap
+    height=800  # Adjust the height of the heatmap
 )
 st.plotly_chart(fig, use_container_width=True)
-
-st.subheader('Insights')
-st.write("""
-1. **Overall Retention Trend**: The overall retention rate declines significantly over time, with the highest retention observed in the initial months. This suggests that users are most engaged shortly after joining but tend to drop off as time progresses.
-2. **High Initial Engagement**: The initial retention rates are relatively high across all cohort months, indicating strong initial engagement from new users. This highlights the effectiveness of initial onboarding and user engagement strategies.
-3. **Significant Drop-Off**: A noticeable drop in retention is observed after the first few months. For example, the cohort from November 2018 drops from 100% in the first period to around 37.19% in the second period. This pattern is consistent across multiple cohorts, indicating a common challenge in sustaining user interest long-term.
-4. **Cohort-Specific Observations**: Certain cohorts, such as those from May 2019 and March 2019, show slightly better retention rates in the mid-periods compared to other months. This may indicate the impact of specific events, features, or campaigns that were particularly effective during those times.
-5. **Long-Term Retention Challenges**: Long-term retention rates drop to single digits across all cohorts. By the tenth period, retention rates are generally below 10%, emphasizing the need for targeted strategies to re-engage long-term users and address reasons for churn.
-""")
